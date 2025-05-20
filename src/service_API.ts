@@ -1,0 +1,78 @@
+// This is the main notification service file
+// This file contains the main logic for the notifications service
+// This is going to be an express server
+
+import express, { Request, Response } from "express";
+import cors from "cors";
+import { createTopic } from "./kafka/client";
+import { produceMessage } from "./kafka/producer";
+import { consumeMessage } from "./kafka/consumer";
+import { startAPIProcessor } from "./service_PROCESSOR";
+import { startEmailProcessor } from "./channel_processors/emailProcessor";
+
+
+
+// initialize the express app
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+
+
+
+
+// Initialize the kafka topics whenever the service starts
+// Initial queue for async processing of notifications
+createTopic("notifications.incoming", 1, 1);
+// final pub/sub before the channel processors
+createTopic("notifications.channel.email", 3, 1);
+createTopic("notifications.channel.sms", 3, 1);
+createTopic("notifications.channel.push", 3, 1);
+createTopic("notifications.channel.webhook", 3, 1);
+
+
+// start the service processor and channel processors
+startAPIProcessor();
+startEmailProcessor();
+
+
+// Health check endpoint
+app.get("/health", (req: Request, res: Response) => {
+  res.status(200).json({ status: "OK" });
+});
+
+
+// Look for notification ingestions from this endpoint
+app.post("/ingest-notification", (async (req: Request, res: Response) => {
+  try {
+    const { notification } = req.body;
+    if (!notification) {
+      return res
+        .status(400)
+        .json({ error: true, message: "Notification is required" });
+    }
+    // Here we can add the logic to process the notification
+    // For now we are just going to log the notification
+    console.log("[INFO] Notification ingested: ", notification);
+
+    // Add the notification to the kafka queue to be processed by the service processor.
+    produceMessage("notifications.incoming", JSON.stringify(notification), 0);
+
+    res.status(200).json({ success: true, message: "Notification ingested" });
+  } catch (err) {
+    console.error("[ERROR] Error in ingesting notification: ", err);
+    res
+      .status(500)
+      .json({ error: true, message: "Error in ingesting notification" });
+  }
+}) as express.RequestHandler);
+
+
+
+
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Notifications service is running on port ${PORT}`);
+});
