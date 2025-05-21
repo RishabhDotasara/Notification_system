@@ -12,6 +12,7 @@ import { startEmailProcessor } from "./channel_processors/emailProcessor";
 import { Notification, NotificationSchema } from "./notification_types";
 import RedisManager from "./redis/redisManager";
 import redisClient from "./redis/client";
+import { startSMSProcessor } from "./channel_processors/smsProcessor";
 
 
 
@@ -43,7 +44,7 @@ createTopic("notifications.channel.webhook", 3, 1);
 // start the service processor and channel processors
 startAPIProcessor();
 startEmailProcessor();
-
+startSMSProcessor();
 
 // Health check endpoint
 app.get("/health", (req: Request, res: Response) => {

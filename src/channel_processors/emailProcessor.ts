@@ -1,5 +1,6 @@
 import { KafkaMessage } from "kafkajs";
 import { consumeMessage, createConsumer } from "../kafka/consumer";
+import { Notification } from "../notification_types";
 
 
 export async function startEmailProcessor()
@@ -8,14 +9,18 @@ export async function startEmailProcessor()
     console.log("[INFO] Email processor started");
     await consumeMessage(emailConsumer, async (message:any)=>{
         console.log("[INFO] Processing message from notifications.channel.email");
-        const notification = JSON.parse(message || "{}");
+        const notification:Notification = JSON.parse(message || "{}");
 
+        const emailContent = notification.message.email
+        const emailChannel = notification.channel_info;
+        if (!emailContent || !emailChannel) {
+            console.error("[ERROR] Email content or channel info not found");
+            return;
+        }
         // Here we can add the logic to process the notification
-        // For now we are just going to log the notification
         console.log("[INFO] Notification processed: ", notification);
+        console.log("[INFO] Email content: ", emailContent);
 
-        // Add the notification to the kafka queue to be processed by the service processor.
-        // Produce the notification we got to the specific kafka topic for channel processors.
     }
     )
     .catch((err) => {

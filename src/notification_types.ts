@@ -1,17 +1,23 @@
 import { z } from "zod";
 
-export const NotificationSchema = z.object({
-  userId: z.string(),
-  employUserPreferences: z.boolean(),
-  message: z.any(), // You can replace this with a more specific type if known
-  channels: z.array(z.string()),
-  notificationId: z.string(),
-  notificationType: z.string(),
-  sendAt: z.preprocess((val:any) => new Date(val as string), z.date()),
-});
 
-export type Notification = z.infer<typeof NotificationSchema>;
+export const messageSchema = z.object({
+  email:z.object({
+    subject:z.string(),
+    body:z.string(),
+  }).optional(),
+  sms:z.object({
+    text:z.string()
+  }).optional(),
+  push:z.object({
+    text:z.string()
+  }).optional(),
+  webhook:z.object({
+    text:z.string()
+  }).optional()
+})
 
+export type messageType = z.infer<typeof messageSchema>
 
 export const userChannelInfoSchema = z.object({
   channel_email: z.string(),
@@ -21,3 +27,19 @@ export const userChannelInfoSchema = z.object({
 })
 
 export type UserChannelInfo = z.infer<typeof userChannelInfoSchema>;
+
+
+export const NotificationSchema = z.object({
+  userId: z.string(),
+  employUserPreferences: z.boolean(),
+  message: messageSchema,
+  channels: z.array(z.string()),
+  notificationId: z.string(),
+  notificationType: z.string(),
+  sendAt: z.preprocess((val:any) => new Date(val as string), z.date()),
+  channel_info: userChannelInfoSchema.optional()
+});
+
+export type Notification = z.infer<typeof NotificationSchema>;
+
+
