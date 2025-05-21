@@ -3,6 +3,12 @@ import {Kafka} from 'kafkajs';
 const kafkaClient = new Kafka({
     clientId:'notifications-service',
     brokers: ['localhost:9092'],
+    retry: {
+        retries: 5,
+        initialRetryTime: 300,
+        maxRetryTime: 5000,
+    },
+    logLevel: 2, // INFO
 })
 
 async function createTopic(topicname:string, partitions:number = 1, replicationFactor:number = 1)

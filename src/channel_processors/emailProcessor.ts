@@ -1,6 +1,7 @@
 import { KafkaMessage } from "kafkajs";
 import { consumeMessage, createConsumer } from "../kafka/consumer";
 import { Notification } from "../notification_types";
+import { sendEmailNotification } from "../utils.ts/mailManager";
 
 
 export async function startEmailProcessor()
@@ -18,8 +19,10 @@ export async function startEmailProcessor()
             return;
         }
         // Here we can add the logic to process the notification
-        console.log("[INFO] Notification processed: ", notification);
+        // console.log("[INFO] Notification processed: ", notification);
         console.log("[INFO] Email content: ", emailContent);
+
+        await sendEmailNotification(emailChannel, emailContent.subject, emailContent.body )
 
     }
     )

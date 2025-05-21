@@ -43,7 +43,7 @@ export async function startAPIProcessor() {
           await redisClient.set(
             "user:" + notification.userId + ":channelInfo",
             JSON.stringify(channelInfo),
-            60*60*24
+            60*5 // 5 minutes expiry
           );
         }
       }

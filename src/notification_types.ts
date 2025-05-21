@@ -37,7 +37,7 @@ export const NotificationSchema = z.object({
   notificationId: z.string(),
   notificationType: z.string(),
   sendAt: z.preprocess((val:any) => new Date(val as string), z.date()),
-  channel_info: userChannelInfoSchema.optional()
+  channel_info: z.string().optional()
 });
 
 export type Notification = z.infer<typeof NotificationSchema>;

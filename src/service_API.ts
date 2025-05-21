@@ -13,7 +13,8 @@ import { Notification, NotificationSchema } from "./notification_types";
 import RedisManager from "./redis/redisManager";
 import redisClient from "./redis/client";
 import { startSMSProcessor } from "./channel_processors/smsProcessor";
-
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 
 // initialize the express app
