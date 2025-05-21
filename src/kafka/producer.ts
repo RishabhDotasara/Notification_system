@@ -8,7 +8,7 @@ const producer = kafkaClient.producer()
 async function produceMessage(topic:string, message:string, partition:number = 0)
 {
     console.log("[INFO] Producing message to topic: ", topic);
-    console.log("[INFO] Message: ", message);
+    // console.log("[INFO] Message: ", message);
     await producer.connect();
     await producer.send({
         topic: topic,

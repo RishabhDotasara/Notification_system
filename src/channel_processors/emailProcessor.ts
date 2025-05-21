@@ -1,13 +1,15 @@
-import { consumeMessage } from "../kafka/consumer";
+import { KafkaMessage } from "kafkajs";
+import { consumeMessage, createConsumer } from "../kafka/consumer";
 
 
 export async function startEmailProcessor()
 {
+    const emailConsumer = await createConsumer("notifications.channel.email", "email-processor");
     console.log("[INFO] Email processor started");
-    await consumeMessage("notifications.channel.email", "email-processor", async (message:any)=>{
+    await consumeMessage(emailConsumer, async (message:any)=>{
         console.log("[INFO] Processing message from notifications.channel.email");
-        const notification = JSON.parse(message.value.toString());
-        console.log("[INFO] Notification: ", notification);
+        const notification = JSON.parse(message || "{}");
+
         // Here we can add the logic to process the notification
         // For now we are just going to log the notification
         console.log("[INFO] Notification processed: ", notification);

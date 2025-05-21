@@ -1,15 +1,16 @@
 
-
 // this will consume messages from the queue and put them to the specific channel processor topics.
 
-import { consumeMessage } from "./kafka/consumer";
+import { KafkaMessage } from "kafkajs";
+import { consumeMessage, createConsumer } from "./kafka/consumer";
 import { produceMessage } from "./kafka/producer";
 
 export async function startAPIProcessor()
 {
-    await consumeMessage("notifications.incoming", "api-processor", async (message:any)=>{
+    const queueConsumer = await createConsumer("notifications.incoming", "api-processor");
+    await consumeMessage(queueConsumer,async (message:KafkaMessage)=>{
         console.log("[INFO] Processing message from notifications.incoming");
-        const notification = JSON.parse(message.value.toString());
+        const notification = message;
         console.log("[INFO] Notification: ", notification);
         // Here we can add the logic to process the notification
         // For now we are just going to log the notification

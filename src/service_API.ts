@@ -9,6 +9,8 @@ import { produceMessage } from "./kafka/producer";
 import { consumeMessage } from "./kafka/consumer";
 import { startAPIProcessor } from "./service_PROCESSOR";
 import { startEmailProcessor } from "./channel_processors/emailProcessor";
+import { Notification, NotificationSchema } from "./notification_types";
+import RedisManager from "./redis/redisManager";
 
 
 
@@ -20,7 +22,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 
-
+//start the redis client
+const redisManager = new RedisManager();
+redisManager.connect().then(() => {
+  console.log("[RedisManager] Redis client connected");
+}).catch((err) => {
+  console.error("[RedisManager] Error connecting to redis client: ", err);
+});
 
 // Initialize the kafka topics whenever the service starts
 // Initial queue for async processing of notifications
@@ -44,22 +52,38 @@ app.get("/health", (req: Request, res: Response) => {
 
 
 // Look for notification ingestions from this endpoint
-app.post("/ingest-notification", (async (req: Request, res: Response) => {
+app.post("/ingest-notifications", (async (req: Request, res: Response) => {
   try {
-    const { notification } = req.body;
-    if (!notification) {
+    const { notifications }:{notifications:Notification[]} = req.body;
+    const notificationStatusCount = {success:0, failed:0}
+    if (!notifications) {
       return res
         .status(400)
-        .json({ error: true, message: "Notification is required" });
+        .json({ error: true, message: "No Notifications to be pushed received!" });
     }
     // Here we can add the logic to process the notification
     // For now we are just going to log the notification
-    console.log("[INFO] Notification ingested: ", notification);
+    // console.log("[INFO] Notification ingested: ", notification);
 
     // Add the notification to the kafka queue to be processed by the service processor.
-    produceMessage("notifications.incoming", JSON.stringify(notification), 0);
+    notifications.forEach((notification: Notification) => {
+      const isValidNotification = NotificationSchema.safeParse(notification)
+      if (!isValidNotification.success)
+      {
+        notificationStatusCount.failed += 1;
+        return;
+      }
+      console.log("[INFO] Notification ingested: ", notification);
+      produceMessage("notifications.incoming", JSON.stringify(notification), 0);
+      notificationStatusCount.success += 1;
+    })
 
-    res.status(200).json({ success: true, message: "Notification ingested" });
+    if (notificationStatusCount.success == 0)
+    {
+      res.status(400).json({ error: true, message: "No valid notifications to be pushed received!" });
+      return;
+    }
+    res.status(200).json({ error: false, message: "Notification ingested", status: {reason:"Invalid Structure!", ...notificationStatusCount} });
   } catch (err) {
     console.error("[ERROR] Error in ingesting notification: ", err);
     res

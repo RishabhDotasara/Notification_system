@@ -1,0 +1,1 @@
+Notification queue -> service_processor (user preferences and proper formatting of messages as per the required channels and pushed them to the respective channel topics) -> channel processors(Send the final message)
