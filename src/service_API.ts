@@ -11,6 +11,7 @@ import { startAPIProcessor } from "./service_PROCESSOR";
 import { startEmailProcessor } from "./channel_processors/emailProcessor";
 import { Notification, NotificationSchema } from "./notification_types";
 import RedisManager from "./redis/redisManager";
+import redisClient from "./redis/client";
 
 
 
@@ -23,8 +24,7 @@ app.use(cors());
 
 
 //start the redis client
-const redisManager = new RedisManager();
-redisManager.connect().then(() => {
+redisClient.connect().then(() => {
   console.log("[RedisManager] Redis client connected");
 }).catch((err) => {
   console.error("[RedisManager] Error connecting to redis client: ", err);

@@ -11,3 +11,13 @@ export const NotificationSchema = z.object({
 });
 
 export type Notification = z.infer<typeof NotificationSchema>;
+
+
+export const userChannelInfoSchema = z.object({
+  channel_email: z.string(),
+  channel_sms: z.string(),
+  channel_push: z.string(),
+  channel_webhook: z.string(),
+})
+
+export type UserChannelInfo = z.infer<typeof userChannelInfoSchema>;
