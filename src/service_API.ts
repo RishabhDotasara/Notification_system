@@ -4,7 +4,7 @@
 
 import express, { Request, Response } from "express";
 import cors from "cors";
-import { createTopic } from "./kafka/client";
+import { checkKafkaServiceStatus, createTopic, kafkaClient } from "./kafka/client";
 import { produceMessage } from "./kafka/producer";
 import { consumeMessage } from "./kafka/consumer";
 import { startAPIProcessor } from "./service_PROCESSOR";
@@ -14,6 +14,7 @@ import RedisManager from "./redis/redisManager";
 import redisClient from "./redis/client";
 import { startSMSProcessor } from "./channel_processors/smsProcessor";
 import * as dotenv from 'dotenv';
+import { METRIC_KEYS } from "./redis/metris_keys";
 dotenv.config();
 
 
@@ -77,6 +78,7 @@ app.post("/ingest-notifications", (async (req: Request, res: Response) => {
       }
       console.log("[INFO] Notification ingested: ", notification);
       produceMessage("notifications.incoming", JSON.stringify(notification), 0);
+      redisClient.increment(METRIC_KEYS.MAINQUEUE.QUEUE_SIZE, notifications.length)
       notificationStatusCount.success += 1;
     })
 
@@ -94,8 +96,24 @@ app.post("/ingest-notifications", (async (req: Request, res: Response) => {
   }
 }) as express.RequestHandler);
 
-
-
+// metric api endpoint
+app.get("/metrics", async (req: Request, res: Response) => {
+  try {
+    const queueSize = await redisClient.get(METRIC_KEYS.MAINQUEUE.QUEUE_SIZE);
+    // check kafka status
+    const kafkaStatus = await checkKafkaServiceStatus();
+    const redisStatus = await redisClient.checkRedisStatus();
+    const metrics = {
+      queueSize: queueSize ? parseInt(queueSize) : 0,
+      kafkaStatus: kafkaStatus,
+      redisStatus: redisStatus,
+    };
+    res.status(200).json({ error: false, metrics });
+  } catch (err) {
+    console.error("[ERROR] Error in getting metrics: ", err);
+    res.status(500).json({ error: true, message: "Error in getting metrics" });
+  }
+});
 
 
 // Start the server

@@ -18,7 +18,7 @@ const userChannelInfoSchema = z.object({
 // 🔥 Simulated user "DB"
 const userDB = {
   user_001: {
-    channel_email: 'alice@example.com',
+    channel_email: 'dotasararishabh@gmail.com',
     channel_sms: '+1111111111',
     channel_push: 'push_token_alice',
     channel_webhook: 'https://webhook.site/alice',

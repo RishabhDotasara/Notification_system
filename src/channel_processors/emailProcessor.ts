@@ -2,6 +2,8 @@ import { KafkaMessage } from "kafkajs";
 import { consumeMessage, createConsumer } from "../kafka/consumer";
 import { Notification } from "../notification_types";
 import { sendEmailNotification } from "../utils.ts/mailManager";
+import redisClient from "../redis/client";
+import { METRIC_KEYS } from "../redis/metris_keys";
 
 
 export async function startEmailProcessor()
@@ -9,6 +11,7 @@ export async function startEmailProcessor()
     const emailConsumer = await createConsumer("notifications.channel.email", "email-processor");
     console.log("[INFO] Email processor started");
     await consumeMessage(emailConsumer, async (message:any)=>{
+        redisClient.decrement(METRIC_KEYS.MAINQUEUE.QUEUE_SIZE, 1);
         console.log("[INFO] Processing message from notifications.channel.email");
         const notification:Notification = JSON.parse(message || "{}");
 

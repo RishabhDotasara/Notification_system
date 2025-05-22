@@ -11,6 +11,24 @@ const kafkaClient = new Kafka({
     logLevel: 2, // INFO
 })
 
+export async function checkKafkaServiceStatus()
+{
+    try 
+    {
+        const admin = kafkaClient.admin();
+        await admin.connect();
+        const topics = await admin.listTopics();
+        // console.log("[INFO] Kafka Topics: ", topics);
+        await admin.disconnect();
+        return true;
+    }
+    catch (err)
+    {
+        console.error("[CRITICAL] Kafka Down: ", err);
+        return false;
+    }
+}
+
 async function createTopic(topicname:string, partitions:number = 1, replicationFactor:number = 1)
 {
     const admin = kafkaClient.admin();
